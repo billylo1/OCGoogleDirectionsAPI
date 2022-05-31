@@ -30,7 +30,7 @@ static NSString *const kOCGoogleDirectionsRequestAttributeAlternatives = @"&alte
 static NSString *const kOCGoogleDirectionsRequestAttributeTrafficModel = @"&traffic_model=";
 static NSString *const kOCGoogleDirectionsRequestAttributeTransitMode = @"&transit_mode=";
 static NSString *const kOCGoogleDirectionsRequestAttributeTransitRoutingPreference = @"&transit_routing_preference=";
-static NSString *const kOCGoogleDirectionsRequestAttributeHeading = @"&heading=";
+static NSString *const kOCGoogleDirectionsRequestAttributeHeading = @"heading%3D";
 
 static NSString *const kOCGoogleDirectionsRequestAttributeSeparator = @"|";
 
@@ -60,11 +60,8 @@ static NSString *const kOCGoogleDirectionsRequestAttributeValueDepartureTimeNow 
     [self appendTrafficModel:request toString:string];
     [self appendTransitMode:request toString:string];
     [self appendTransitRoutingPreference:request toString:string];
-    [self appendHeading:request toString:string];
 
     [self appendKey:key toString:string];
-
-    NSLog(@"hello %@", string);
     
     return string;
 }
@@ -97,12 +94,19 @@ static NSString *const kOCGoogleDirectionsRequestAttributeValueDepartureTimeNow 
 - (void)appendOrigin:(OCDirectionsRequest *)request toString:(NSMutableString *)string {
     [string appendString:kOCGoogleDirectionsRequestAttributeOrigin];
 
+    if (request.heading >= 0) {
+        [string appendString:kOCGoogleDirectionsRequestAttributeHeading];
+        [string appendString:[self stringFromCLLocationDirection:request.heading]];
+        [string appendString:@"%3A"];       // :
+    }
+
     if (request.originLocation) {
         NSString *originString = [self stringFormCLLocation:request.originLocation];
         [string appendString:originString];
     } else {
         [string appendString:[self encodeParameter:request.originString]];
     }
+    
 }
 
 - (void)appendDestination:(OCDirectionsRequest *)request toString:(NSMutableString *)string {
@@ -307,15 +311,6 @@ static NSString *const kOCGoogleDirectionsRequestAttributeValueDepartureTimeNow 
     [string appendString:transitRoutingPreferenceString];
 }
 
-- (void)appendHeading:(OCDirectionsRequest *)request toString:(NSMutableString *)string {
-    [string appendString:kOCGoogleDirectionsRequestAttributeHeading];
-
-    if (request.heading) {
-        [string appendString:[self stringFromCLLocationDirection:request.heading]];
-    }
-}
-
-
 - (void)appendKey:(NSString *)key toString:(NSMutableString *)string {
     /**
      API key is not required.
@@ -334,7 +329,7 @@ static NSString *const kOCGoogleDirectionsRequestAttributeValueDepartureTimeNow 
 }
 
 - (NSString *)stringFromCLLocationDirection:(CLLocationDirection)heading {
-    NSString *string = [NSString stringWithFormat:@"%lf", heading];
+    NSString *string = [NSString stringWithFormat:@"%.0f", heading];
     return string;
 }
 
